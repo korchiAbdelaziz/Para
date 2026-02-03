@@ -1,0 +1,39 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
+import 'providers/auth_provider.dart';
+import 'providers/product_provider.dart';
+
+void main() {
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ProductProvider()),
+      ],
+      child: const ParaShopApp(),
+    ),
+  );
+}
+
+class ParaShopApp extends StatelessWidget {
+  const ParaShopApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'ParaShop',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
+        useMaterial3: true,
+      ),
+      debugShowCheckedModeBanner: false,
+      home: Consumer<AuthProvider>(
+        builder: (context, auth, _) {
+          return auth.isAuthenticated ? const HomeScreen() : const LoginScreen();
+        },
+      ),
+    );
+  }
+}

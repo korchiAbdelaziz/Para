@@ -1,0 +1,6 @@
+name,description,price,productCode,imageUrl,category
+"Sérum Vitamine C","Sérum éclat du visage à la vitamine C pure",25.99,"SERUM-VC-001","https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=400","Soin du Visage"
+"Crème Solaire SPF50","Haute protection solaire pour peaux sensibles",18.50,"SUN-SPF50-002","https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=400","Solaire"
+"Shampooing Purifiant","Shampooing doux aux herbes naturelles",12.00,"SHAMP-HERB-003","https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=400","Cheveux"
+"Dentifrice Blancheur","Soin dentaire pour un sourire éclatant",5.90,"DENT-BN-004","https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=400","Hygiène Dentaire"
+"Huile de Bébé","Huile hydratante douce pour massage bébé",9.75,"BABY-OIL-005","https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=400","Bébé & Maman"
