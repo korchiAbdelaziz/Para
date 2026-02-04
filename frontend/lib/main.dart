@@ -33,11 +33,7 @@ class ParaShopApp extends StatelessWidget {
       title: "Dani's Parasante",
       theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
-      home: Consumer<AuthProvider>(
-        builder: (context, auth, _) {
-          return auth.isAuthenticated ? const HomeScreen() : const LoginScreen();
-        },
-      ),
+      home: const HomeScreen(),
     );
   }
 }

@@ -136,9 +136,10 @@ class _BulkUploadScreenState extends State<BulkUploadScreen> {
         foregroundColor: Colors.teal.shade900,
         elevation: 0,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.all(24),
@@ -165,7 +166,7 @@ class _BulkUploadScreenState extends State<BulkUploadScreen> {
             ),
             const SizedBox(height: 32),
             _buildFormatGuide(),
-            const Spacer(),
+            const SizedBox(height: 32),
             if (_selectedFile != null)
               Container(
                 margin: const EdgeInsets.only(bottom: 16),

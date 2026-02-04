@@ -75,15 +75,29 @@ class _InventoryManagementScreenState extends State<InventoryManagementScreen> {
             return const Center(child: Text('No products in inventory.'));
           }
 
+          // Create list with inventory quantities and sort by quantity descending
+          final productsWithInventory = productProvider.products.map((product) {
+            final inventory = inventoryProvider.items.firstWhere(
+              (item) => item.productCode == product.sku,
+              orElse: () => InventoryItem(productCode: product.sku, quantity: 0),
+            );
+            return {'product': product, 'inventory': inventory};
+          }).toList();
+
+          // Sort by quantity (highest first)
+          productsWithInventory.sort((a, b) {
+            final qtyA = (a['inventory'] as InventoryItem).quantity;
+            final qtyB = (b['inventory'] as InventoryItem).quantity;
+            return qtyB.compareTo(qtyA); // Descending order
+          });
+
           return ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: productProvider.products.length,
+            itemCount: productsWithInventory.length,
             itemBuilder: (context, index) {
-              final product = productProvider.products[index];
-              final inventory = inventoryProvider.items.firstWhere(
-                (item) => item.productCode == product.sku,
-                orElse: () => InventoryItem(productCode: product.sku, quantity: 0),
-              );
+              final item = productsWithInventory[index];
+              final product = item['product'] as dynamic;
+              final inventory = item['inventory'] as InventoryItem;
 
               return Card(
                 elevation: 0,

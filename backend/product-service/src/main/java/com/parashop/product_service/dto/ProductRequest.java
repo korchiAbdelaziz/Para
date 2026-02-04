@@ -29,6 +29,7 @@ public class ProductRequest {
     
     private List<String> imageUrls; // For JSON requests
     
+    @CsvBindByName(column = "quantity")
     private Integer quantity;
 
     @CsvBindByName(column = "category")

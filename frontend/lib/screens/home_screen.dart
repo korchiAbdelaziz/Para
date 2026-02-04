@@ -7,9 +7,14 @@ import 'product_detail_screen.dart';
 import 'admin/admin_dashboard_screen.dart';
 import 'orders_screen.dart';
 import 'cart_screen.dart';
+import 'login_screen.dart';
 import 'profile_screen.dart';
 import '../utils/custom_notification.dart';
 import '../theme/app_theme.dart';
+import '../widgets/top_bar.dart';
+import '../widgets/main_navigation.dart';
+import '../widgets/hero_carousel.dart';
+import '../widgets/feature_badges.dart';
 import 'dart:async';
 
 class HomeScreen extends StatefulWidget {
@@ -64,119 +69,83 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth > 900;
     final isTablet = screenWidth > 600 && screenWidth <= 900;
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final isAdmin = auth.user?.username == 'admin';
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundLight,
-      appBar: _buildPremiumAppBar(context),
-      drawer: _buildDrawer(context),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: Consumer<ProductProvider>(
-          builder: (context, productProvider, child) {
-            return Column(
-              children: [
-                if (productProvider.categories.isNotEmpty)
-                  _buildCategoryFilter(productProvider, isDesktop),
-                Expanded(
-                  child: _buildProductGrid(productProvider, isDesktop, isTablet),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  PreferredSizeWidget _buildPremiumAppBar(BuildContext context) {
-    return AppBar(
-      flexibleSpace: Container(
-        decoration: BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-        ),
-      ),
-      title: Row(
+      body: Column(
         children: [
-          Container(
-            padding: EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryGold.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(Icons.local_pharmacy, color: AppTheme.primaryGold, size: 24),
-          ),
-          SizedBox(width: 12),
-          Text(
-            "Dani's Parasante",
-            style: TextStyle(
-              color: AppTheme.primaryGold,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
+          // Top Bar
+          TopBar(),
+          // Main Navigation
+          MainNavigation(),
+          // Content
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  // Hero Carousel
+                  HeroCarousel(),
+                  // Feature Badges
+                  FeatureBadges(),
+                  // Products Section
+                  FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: Consumer<ProductProvider>(
+                      builder: (context, productProvider, child) {
+                        return Column(
+                          children: [
+                            if (productProvider.categories.isNotEmpty)
+                              _buildCategoryFilter(productProvider, isDesktop),
+                            _buildProductGrid(productProvider, isDesktop, isTablet, isAdmin),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
       ),
-      actions: [
-        if (Provider.of<AuthProvider>(context, listen: false).user?.username != 'admin')
-          Consumer<CartProvider>(
-            builder: (_, cart, ch) => Badge(
-              label: Text(cart.totalQuantity.toString()),
-              isLabelVisible: cart.totalQuantity > 0,
-              backgroundColor: AppTheme.primaryGold,
-              textColor: AppTheme.primaryGreen,
-              child: ch,
-            ),
-            child: IconButton(
-              icon: Icon(Icons.shopping_cart_outlined, color: AppTheme.lightGold),
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const CartScreen()),
-                );
-              },
-            ),
-          ),
-        IconButton(
-          icon: Icon(Icons.refresh_rounded, color: AppTheme.lightGold),
-          tooltip: 'Actualiser',
-          onPressed: () => _fetchData(),
-        ),
-        IconButton(
-          icon: Icon(Icons.logout_rounded, color: AppTheme.lightGold),
-          onPressed: () => Provider.of<AuthProvider>(context, listen: false).logout(),
-        ),
-        SizedBox(width: 8),
-      ],
+      // Drawer for admin/user menu
+      endDrawer: _buildDrawer(context),
     );
   }
 
   Widget _buildCategoryFilter(ProductProvider provider, bool isDesktop) {
     return Container(
-      height: 70,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryGreen.withOpacity(0.05),
-            blurRadius: 8,
-            offset: Offset(0, 2),
+      padding: EdgeInsets.symmetric(vertical: 24, horizontal: isDesktop ? 48 : 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Tous nos produits',
+            style: TextStyle(
+              fontSize: isDesktop ? 32 : 24,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.primaryGreen,
+            ),
           ),
-        ],
-      ),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 16, vertical: 12),
-        itemCount: provider.categories.length,
-        itemBuilder: (context, index) {
-          final category = provider.categories[index];
-          final isSelected = provider.selectedCategory == category ||
-              (provider.selectedCategory == null && category == 'All');
+          SizedBox(height: 8),
+          Text(
+            '${provider.products.length} produits trouvés',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppTheme.textSecondary,
+            ),
+          ),
+          SizedBox(height: 24),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: provider.categories.map((category) {
+              final isSelected = provider.selectedCategory == category ||
+                  (provider.selectedCategory == null && category == 'All');
 
-          return Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: AnimatedContainer(
-              duration: Duration(milliseconds: 300),
-              child: FilterChip(
+              return FilterChip(
                 label: Text(
                   category,
                   style: TextStyle(
@@ -200,73 +169,87 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
-              ),
-            ),
-          );
-        },
+              );
+            }).toList(),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildProductGrid(ProductProvider provider, bool isDesktop, bool isTablet) {
+  Widget _buildProductGrid(ProductProvider provider, bool isDesktop, bool isTablet, bool isAdmin) {
     if (provider.isLoading && provider.products.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(color: AppTheme.primaryGold),
-            SizedBox(height: 16),
-            Text('Chargement...', style: TextStyle(color: AppTheme.textSecondary)),
-          ],
+      return Container(
+        height: 400,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: AppTheme.primaryGold),
+              SizedBox(height: 16),
+              Text('Chargement...', style: TextStyle(color: AppTheme.textSecondary)),
+            ],
+          ),
         ),
       );
     }
 
     if (provider.error != null && provider.products.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
-            SizedBox(height: 16),
-            Text('Erreur: ${provider.error}', style: TextStyle(color: Colors.red)),
-          ],
+      return Container(
+        height: 400,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+              SizedBox(height: 16),
+              Text('Erreur: ${provider.error}', style: TextStyle(color: Colors.red)),
+            ],
+          ),
         ),
       );
     }
 
     if (provider.products.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.inventory_2_outlined, size: 80, color: AppTheme.accentGreen.withOpacity(0.5)),
-            SizedBox(height: 16),
-            Text('Aucun produit disponible', style: TextStyle(fontSize: 18, color: AppTheme.textSecondary)),
-          ],
+      return Container(
+        height: 400,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.inventory_2_outlined, size: 80, color: AppTheme.accentGreen.withOpacity(0.5)),
+              SizedBox(height: 16),
+              Text('Aucun produit disponible', style: TextStyle(fontSize: 18, color: AppTheme.textSecondary)),
+            ],
+          ),
         ),
       );
     }
 
     int crossAxisCount = isDesktop ? 4 : (isTablet ? 3 : 2);
-    double padding = isDesktop ? 32 : (isTablet ? 24 : 16);
+    double padding = isDesktop ? 48 : (isTablet ? 24 : 16);
 
-    return GridView.builder(
+    return Container(
       padding: EdgeInsets.all(padding),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        childAspectRatio: 0.68,
-        crossAxisSpacing: isDesktop ? 24 : 16,
-        mainAxisSpacing: isDesktop ? 24 : 16,
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: NeverScrollableScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
+          childAspectRatio: 0.68,
+          crossAxisSpacing: isDesktop ? 24 : 16,
+          mainAxisSpacing: isDesktop ? 24 : 16,
+        ),
+        itemCount: provider.products.length,
+        itemBuilder: (context, index) {
+          final product = provider.products[index];
+          return _AnimatedProductCard(
+            product: product,
+            index: index,
+            isAdmin: isAdmin,
+          );
+        },
       ),
-      itemCount: provider.products.length,
-      itemBuilder: (context, index) {
-        final product = provider.products[index];
-        return _AnimatedProductCard(
-          product: product,
-          index: index,
-        );
-      },
     );
   }
 
@@ -321,7 +304,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     Navigator.of(context).push(MaterialPageRoute(builder: (context) => const AdminDashboardScreen()));
                   }),
                 Divider(color: AppTheme.lightGold.withOpacity(0.3), thickness: 1, indent: 16, endIndent: 16),
-                _buildDrawerItem(Icons.logout_rounded, 'Déconnexion', () => auth.logout(), isDestructive: true),
+                if (auth.isAuthenticated)
+                  _buildDrawerItem(Icons.logout_rounded, 'Déconnexion', () => auth.logout(), isDestructive: true)
+                else
+                   _buildDrawerItem(Icons.login_rounded, 'Se connecter / S\'inscrire', () {
+                     Navigator.pop(context);
+                     Navigator.of(context).push(MaterialPageRoute(builder: (context) => LoginScreen()));
+                   }),
               ],
             ),
           ),
@@ -349,8 +338,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 class _AnimatedProductCard extends StatefulWidget {
   final dynamic product;
   final int index;
+  final bool isAdmin;
 
-  const _AnimatedProductCard({required this.product, required this.index});
+  const _AnimatedProductCard({
+    required this.product,
+    required this.index,
+    required this.isAdmin,
+  });
 
   @override
   State<_AnimatedProductCard> createState() => _AnimatedProductCardState();
@@ -382,7 +376,6 @@ class _AnimatedProductCardState extends State<_AnimatedProductCard> with SingleT
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context, listen: false);
-    final isAdmin = Provider.of<AuthProvider>(context, listen: false).user?.username == 'admin';
 
     return MouseRegion(
       onEnter: (_) {
@@ -523,11 +516,17 @@ class _AnimatedProductCardState extends State<_AnimatedProductCard> with SingleT
                             ),
                           ),
                         SizedBox(height: 12),
-                        if (!isAdmin)
+                        if (!widget.isAdmin)
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
                               onPressed: () {
+                                if (!Provider.of<AuthProvider>(context, listen: false).isAuthenticated) {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(builder: (context) => LoginScreen()),
+                                  );
+                                  return;
+                                }
                                 if (widget.product.stock <= 0) {
                                   showTopNotification(
                                     context,

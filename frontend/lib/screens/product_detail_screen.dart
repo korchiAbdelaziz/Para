@@ -6,6 +6,7 @@ import '../providers/cart_provider.dart';
 import 'cart_screen.dart';
 import 'admin/product_form_screen.dart';
 import 'package:provider/provider.dart';
+import 'login_screen.dart';
 import '../utils/custom_notification.dart';
 
 class ProductDetailScreen extends StatelessWidget {
@@ -43,119 +44,138 @@ class ProductDetailScreen extends StatelessWidget {
           const SizedBox(width: 8),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: double.infinity,
-                height: 300,
-                decoration: BoxDecoration(
-                  color: Colors.teal.shade50,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: product.imageUrls.isNotEmpty
-                    ? Stack(
-                        alignment: Alignment.bottomCenter,
-                        children: [
-                          PageView.builder(
-                            itemCount: product.imageUrls.length,
-                            itemBuilder: (context, index) {
-                              return ClipRRect(
-                                borderRadius: BorderRadius.circular(20),
-                                child: Image.network(
-                                  product.imageUrls[index],
-                                  fit: BoxFit.contain, // Changed to contain for full view
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      const Icon(Icons.broken_image_outlined, size: 80, color: Colors.grey),
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: double.infinity,
+                      height: 300,
+                      decoration: BoxDecoration(
+                        color: Colors.teal.shade50,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: product.imageUrls.isNotEmpty
+                          ? Stack(
+                              alignment: Alignment.bottomCenter,
+                              children: [
+                                PageView.builder(
+                                  itemCount: product.imageUrls.length,
+                                  itemBuilder: (context, index) {
+                                    return ClipRRect(
+                                      borderRadius: BorderRadius.circular(20),
+                                      child: Image.network(
+                                        product.imageUrls[index],
+                                        fit: BoxFit.contain,
+                                        errorBuilder: (context, error, stackTrace) =>
+                                            const Icon(Icons.broken_image_outlined, size: 80, color: Colors.grey),
+                                      ),
+                                    );
+                                  },
                                 ),
-                              );
-                            },
-                          ),
-                          if (product.imageUrls.length > 1)
-                            Positioned(
-                              bottom: 16,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: List.generate(
-                                  product.imageUrls.length,
-                                  (index) => Container(
-                                    width: 8,
-                                    height: 8,
-                                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: Colors.teal.withOpacity(0.5), // Active logic needed but simple for now
+                                if (product.imageUrls.length > 1)
+                                  Positioned(
+                                    bottom: 16,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: List.generate(
+                                        product.imageUrls.length,
+                                        (index) => Container(
+                                          width: 8,
+                                          height: 8,
+                                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.teal.withOpacity(0.5),
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
+                              ],
+                            )
+                          : (product.imageUrl != null && product.imageUrl!.isNotEmpty
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Image.network(
+                                    product.imageUrl!,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        const Icon(Icons.broken_image_outlined, size: 80, color: Colors.grey),
+                                  ),
+                                )
+                              : const Icon(Icons.shopping_bag_outlined, size: 80, color: Colors.teal)),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    product.name,
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'SKU: ${product.sku}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      if (product.discountPrice != null && product.discountPrice! > 0) ...[
+                        Text(
+                          '${product.price} €',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.grey.shade500,
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          '${product.discountPrice} €',
+                          style: TextStyle(
+                            fontSize: 28,
+                            color: Colors.red.shade600,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ] else
+                        Text(
+                          '${product.price} €',
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                color: Colors.teal,
+                                fontWeight: FontWeight.bold,
                               ),
-                            ),
-                        ],
-                      )
-                    : (product.imageUrl != null && product.imageUrl!.isNotEmpty
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: Image.network(
-                              product.imageUrl!,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  const Icon(Icons.broken_image_outlined, size: 80, color: Colors.grey),
-                            ),
-                          )
-                        : const Icon(Icons.shopping_bag_outlined, size: 80, color: Colors.teal)),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    product.description,
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 24), // Bottom padding for scroll
+                ],
               ),
             ),
-            const SizedBox(height: 24),
-            Text(
-              product.name,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'SKU: ${product.sku}',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                if (product.discountPrice != null && product.discountPrice! > 0) ...[
-                  Text(
-                    '${product.price} €',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey.shade500,
-                      decoration: TextDecoration.lineThrough,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    '${product.discountPrice} €',
-                    style: TextStyle(
-                      fontSize: 28,
-                      color: Colors.red.shade600,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ] else
-                  Text(
-                    '${product.price} €',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          color: Colors.teal,
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -5),
+                ),
               ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              product.description,
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const Spacer(),
-            Consumer<AuthProvider>(
+            child: Consumer<AuthProvider>(
               builder: (context, auth, _) {
                 if (auth.user?.username == 'admin') {
                   return Row(
@@ -200,6 +220,16 @@ class ProductDetailScreen extends StatelessWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
+                      if (!auth.isAuthenticated) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) => LoginScreen()),
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Veuillez vous connecter pour commander')),
+                        );
+                        return;
+                      }
+
                       if (product.stock <= 0) {
                          showTopNotification(
                           context,
@@ -211,8 +241,6 @@ class ProductDetailScreen extends StatelessWidget {
                         return;
                       }
                       final cart = Provider.of<CartProvider>(context, listen: false);
-                      // We should ideally check if cart quantity + 1 > stock, but cart provider doesn't expose item count easily by ID without lookup.
-                      // For now, basic check.
                       cart.addItem(product);
                       showTopNotification(
                         context,
@@ -236,8 +264,8 @@ class ProductDetailScreen extends StatelessWidget {
                 );
               },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -8,6 +8,7 @@ class AppTheme {
   static const Color primaryGold = Color(0xFFD4AF37);
   static const Color lightGold = Color(0xFFF4E4C1);
   static const Color darkGreen = Color(0xFF081C15);
+  static const Color turquoise = Color(0xFF17A2B8);
   
   // Neutral Colors
   static const Color backgroundLight = Color(0xFFF8F9FA);
