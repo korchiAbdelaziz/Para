@@ -33,4 +33,22 @@ public class OrderController {
     public List<OrderResponse> getOrdersByUsername(@PathVariable String username) {
         return orderService.getOrdersByUsername(username);
     }
+
+    @PutMapping("/validate/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public void validateOrder(@PathVariable Long id) {
+        orderService.validateOrder(id);
+    }
+
+    @PutMapping("/cancel/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public void cancelOrder(@PathVariable Long id) {
+        orderService.cancelOrder(id);
+    }
+
+    @GetMapping("/stats")
+    @ResponseStatus(HttpStatus.OK)
+    public List<java.util.Map<String, Object>> getUserStats() {
+        return orderService.getUserStats();
+    }
 }

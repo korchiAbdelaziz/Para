@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @Builder
@@ -19,10 +20,15 @@ public class ProductRequest {
     private String description;
     @CsvBindByName(column = "price")
     private BigDecimal price;
+    @CsvBindByName(column = "discountPrice")
+    private BigDecimal discountPrice;
     @CsvBindByName(column = "productCode")
     private String productCode;
-    @CsvBindByName(column = "imageUrl")
-    private String imageUrl;
+    @CsvBindByName(column = "imageUrls")
+    private String imageUrlsCsv; // For CSV bulk upload (comma separated)
+    
+    private List<String> imageUrls; // For JSON requests
+    
     @CsvBindByName(column = "category")
     private String category;
 }

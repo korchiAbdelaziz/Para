@@ -18,21 +18,26 @@ class ProductDetailScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(product.name),
         actions: [
-          Consumer<CartProvider>(
-            builder: (_, cart, ch) => Badge(
-              label: Text(cart.totalQuantity.toString()),
-              isLabelVisible: cart.totalQuantity > 0,
-              backgroundColor: Colors.teal.shade700,
-              child: ch,
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.shopping_cart),
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const CartScreen()),
-                );
-              },
-            ),
+          Consumer<AuthProvider>(
+            builder: (context, auth, child) {
+              if (auth.user?.username == 'admin') return const SizedBox.shrink();
+              return Consumer<CartProvider>(
+                builder: (_, cart, ch) => Badge(
+                  label: Text(cart.totalQuantity.toString()),
+                  isLabelVisible: cart.totalQuantity > 0,
+                  backgroundColor: Colors.teal.shade700,
+                  child: ch,
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.shopping_cart),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const CartScreen()),
+                    );
+                  },
+                ),
+              );
+            },
           ),
           const SizedBox(width: 8),
         ],

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/product_provider.dart';
+import 'package:file_picker/file_picker.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -8,13 +10,13 @@ class ProfileScreen extends StatefulWidget {
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
-
 class _ProfileScreenState extends State<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
   late TextEditingController _addressController;
+  String? _profileImageUrl;
 
   @override
   void initState() {
@@ -24,6 +26,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _emailController = TextEditingController(text: user?.email ?? '');
     _phoneController = TextEditingController(text: user?.phone ?? '');
     _addressController = TextEditingController(text: user?.address ?? '');
+    _profileImageUrl = user?.profileImageUrl;
   }
 
   @override
@@ -44,6 +47,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _emailController.text,
       _phoneController.text,
       _addressController.text,
+      profileImageUrl: _profileImageUrl,
     );
 
     if (mounted) {
@@ -55,6 +59,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(auth.error!), backgroundColor: Colors.redAccent),
         );
+      }
+    }
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    // Reusing ProductProvider's upload for simplicity if it handles general uploads
+    // or just using a file picker and adding the logic here.
+    // For now, let's assume we can pick and then we'll need a way to upload.
+    // Since I've updated the backend, I'll use the upload-image endpoint from product-service
+    // as a general asset server for this demo.
+    final result = await FilePicker.platform.pickFiles(type: FileType.image, withData: true);
+    if (result != null) {
+      final file = result.files.first;
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final productProvider = Provider.of<ProductProvider>(context, listen: false);
+
+      final url = await productProvider.uploadProductImage(file.bytes!, file.name, auth.user?.token);
+      if (url != null) {
+        setState(() => _profileImageUrl = url);
       }
     }
   }
@@ -80,7 +103,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     CircleAvatar(
                       radius: 50,
                       backgroundColor: Colors.teal.shade50,
-                      child: const Icon(Icons.person, size: 50, color: Colors.teal),
+                      backgroundImage: _profileImageUrl != null ? NetworkImage(_profileImageUrl!) : null,
+                      child: _profileImageUrl == null ? const Icon(Icons.person, size: 50, color: Colors.teal) : null,
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: GestureDetector(
+                        onTap: _pickAndUploadImage,
+                        child: CircleAvatar(
+                          radius: 18,
+                          backgroundColor: Colors.teal,
+                          child: const Icon(Icons.edit, size: 18, color: Colors.white),
+                        ),
+                      ),
                     ),
                   ],
                 ),

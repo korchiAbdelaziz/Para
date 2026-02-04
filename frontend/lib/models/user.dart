@@ -5,6 +5,7 @@ class User {
   final String? phone;
   final String? address;
   final String? token;
+  final String? profileImageUrl;
 
   User({
     required this.id,
@@ -13,6 +14,7 @@ class User {
     this.phone,
     this.address,
     this.token,
+    this.profileImageUrl,
   });
 
   User copyWith({
@@ -22,6 +24,7 @@ class User {
     String? phone,
     String? address,
     String? token,
+    String? profileImageUrl,
   }) {
     return User(
       id: id ?? this.id,
@@ -30,6 +33,7 @@ class User {
       phone: phone ?? this.phone,
       address: address ?? this.address,
       token: token ?? this.token,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
     );
   }
 
@@ -41,6 +45,7 @@ class User {
       phone: json['phone'],
       address: json['address'],
       token: json['token'],
+      profileImageUrl: json['profileImageUrl'],
     );
   }
 }

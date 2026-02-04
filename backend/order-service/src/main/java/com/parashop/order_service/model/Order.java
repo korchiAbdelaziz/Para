@@ -20,6 +20,7 @@ public class Order {
     private Long id;
     private String orderNumber;
     private String username;
+    private String status; // PENDING_VALIDATION, VALIDATED, CANCELLED
     @OneToMany(cascade = CascadeType.ALL)
     private List<OrderLineItems> orderLineItemsList;
 }

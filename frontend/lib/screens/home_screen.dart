@@ -33,22 +33,23 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('ParaShop'),
         actions: [
-          Consumer<CartProvider>(
-            builder: (_, cart, ch) => Badge(
-              label: Text(cart.totalQuantity.toString()),
-              isLabelVisible: cart.totalQuantity > 0,
-              backgroundColor: Colors.teal.shade700,
-              child: ch,
+          if (Provider.of<AuthProvider>(context, listen: false).user?.username != 'admin')
+            Consumer<CartProvider>(
+              builder: (_, cart, ch) => Badge(
+                label: Text(cart.totalQuantity.toString()),
+                isLabelVisible: cart.totalQuantity > 0,
+                backgroundColor: Colors.teal.shade700,
+                child: ch,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.shopping_cart),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const CartScreen()),
+                  );
+                },
+              ),
             ),
-            child: IconButton(
-              icon: const Icon(Icons.shopping_cart),
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const CartScreen()),
-                );
-              },
-            ),
-          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => Provider.of<AuthProvider>(context, listen: false).logout(),
@@ -80,16 +81,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: const Text('Home'),
                   onTap: () => Navigator.pop(context),
                 ),
-                ListTile(
-                  leading: const Icon(Icons.history),
-                  title: const Text('My Orders'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => const OrdersScreen()),
-                    );
-                  },
-                ),
+                if (auth.user?.username != 'admin')
+                  ListTile(
+                    leading: const Icon(Icons.history),
+                    title: const Text('My Orders'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => const OrdersScreen()),
+                      );
+                    },
+                  ),
                 ListTile(
                   leading: const Icon(Icons.person),
                   title: const Text('My Profile'),
@@ -284,36 +286,37 @@ class _ProductCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        cart.addItem(product);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('${product.name} added to cart'),
-                            duration: const Duration(seconds: 1),
-                            action: SnackBarAction(
-                              label: 'VIEW',
-                              onPressed: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (context) => const CartScreen()),
-                                );
-                              },
+                  if (Provider.of<AuthProvider>(context, listen: false).user?.username != 'admin')
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          cart.addItem(product);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${product.name} added to cart'),
+                              duration: const Duration(seconds: 1),
+                              action: SnackBarAction(
+                                label: 'VIEW',
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(builder: (context) => const CartScreen()),
+                                  );
+                                },
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.teal,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.teal,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: const Text('Add to Cart', style: TextStyle(fontSize: 12)),
                       ),
-                      child: const Text('Add to Cart', style: TextStyle(fontSize: 12)),
                     ),
-                  ),
                 ],
               ),
             ),

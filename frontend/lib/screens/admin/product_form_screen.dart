@@ -20,8 +20,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   late TextEditingController _nameController;
   late TextEditingController _descController;
   late TextEditingController _priceController;
+  late TextEditingController _discountPriceController;
   late TextEditingController _skuController;
-  late TextEditingController _imageController;
+  late List<TextEditingController> _imageControllers;
   late TextEditingController _categoryController;
   bool _isCheckingUrl = false;
   bool _isUrlValid = true;
@@ -35,9 +36,16 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _nameController = TextEditingController(text: widget.product?.name ?? '');
     _descController = TextEditingController(text: widget.product?.description ?? '');
     _priceController = TextEditingController(text: widget.product?.price.toString() ?? '');
+    _discountPriceController = TextEditingController(text: widget.product?.discountPrice?.toString() ?? '');
     _skuController = TextEditingController(text: widget.product?.sku ?? '');
-    _imageController = TextEditingController(text: widget.product?.imageUrl ?? '');
     _categoryController = TextEditingController(text: widget.product?.category ?? '');
+    
+    // Initialize image controllers
+    if (widget.product != null && widget.product!.imageUrls.isNotEmpty) {
+      _imageControllers = widget.product!.imageUrls.map((url) => TextEditingController(text: url)).toList();
+    } else {
+      _imageControllers = [TextEditingController(text: widget.product?.imageUrl ?? '')];
+    }
   }
 
   @override
@@ -45,8 +53,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _nameController.dispose();
     _descController.dispose();
     _priceController.dispose();
+    _discountPriceController.dispose();
     _skuController.dispose();
-    _imageController.dispose();
+    for (var c in _imageControllers) {
+      c.dispose();
+    }
     _categoryController.dispose();
     super.dispose();
   }
@@ -57,12 +68,15 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     final productProvider = Provider.of<ProductProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
+    final imageUrls = _imageControllers.map((c) => c.text).where((t) => t.isNotEmpty).toList();
+
     final productData = {
       'name': _nameController.text,
       'description': _descController.text,
       'price': double.parse(_priceController.text),
+      'discountPrice': _discountPriceController.text.isNotEmpty ? double.parse(_discountPriceController.text) : null,
       'productCode': _skuController.text,
-      'imageUrl': _imageController.text,
+      'imageUrls': imageUrls,
       'category': _categoryController.text,
     };
 
@@ -90,7 +104,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     }
   }
 
-  Future<void> _pickAndUploadImage() async {
+  Future<void> _pickAndUploadImageForIndex(int index) async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       withData: true,
@@ -109,15 +123,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
       if (imageUrl != null) {
         setState(() {
-          _imageController.text = imageUrl;
-          _isUrlValid = true;
+          _imageControllers[index].text = imageUrl;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Image uploaded successfully!'), backgroundColor: Colors.green),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Upload failed'), backgroundColor: Colors.redAccent),
+          const SnackBar(content: Text('Image uploaded!'), backgroundColor: Colors.green),
         );
       }
     }
@@ -233,88 +242,95 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: _buildTextField(
-                      controller: _skuController,
-                      label: 'SKU / Code',
-                      icon: Icons.qr_code_rounded,
-                      validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+                      controller: _discountPriceController,
+                      label: 'Discount Price (€)',
+                      icon: Icons.local_offer_outlined,
+                      keyboardType: TextInputType.number,
+                      hintText: 'Optional',
                     ),
                   ),
                 ],
               ),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      children: [
-                        _buildTextField(
-                          controller: _imageController,
-                          label: 'Image URL',
-                          icon: Icons.image_search_rounded,
-                          hintText: 'https://images.unsplash.com/...',
-                          onChanged: (val) => _validateUrl(val),
-                        ),
-                        if (!_isUrlValid)
-                          const Padding(
-                            padding: EdgeInsets.only(top: 8, left: 12),
-                            child: Text(
-                              'Invalid or inaccessible image URL',
-                              style: TextStyle(color: Colors.red, fontSize: 12),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Column(
+              const SizedBox(height: 20),
+              _buildTextField(
+                controller: _skuController,
+                label: 'SKU / Code',
+                icon: Icons.qr_code_rounded,
+                validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Product Images',
+                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.teal.shade900),
+              ),
+              const SizedBox(height: 8),
+              ...List.generate(_imageControllers.length, (index) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
                     children: [
+                      Expanded(
+                        child: _buildTextField(
+                          controller: _imageControllers[index],
+                          label: 'Image URL ${index + 1}',
+                          icon: Icons.image_outlined,
+                          onChanged: (val) => setState(() {}),
+                        ),
+                      ),
                       IconButton(
-                        onPressed: _pickAndUploadImage,
-                        icon: const Icon(Icons.upload_file_rounded, color: Colors.teal),
-                        tooltip: 'Upload from machine',
+                        onPressed: () => _pickAndUploadImageForIndex(index),
+                        icon: const Icon(Icons.upload_file, color: Colors.teal),
                       ),
-                      TextButton.icon(
-                        onPressed: () {
-                          if (_nameController.text.isNotEmpty) {
-                            final generatedUrl = 'https://source.unsplash.com/featured/?${_nameController.text.replaceAll(' ', ',')}';
+                      if (_imageControllers.length > 1)
+                        IconButton(
+                          onPressed: () {
                             setState(() {
-                              _imageController.text = generatedUrl;
-                              _isUrlValid = true;
+                              _imageControllers[index].dispose();
+                              _imageControllers.removeAt(index);
                             });
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Image suggestion generated!')),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Enter a product name first')),
-                            );
-                          }
-                        },
-                        icon: const Icon(Icons.auto_fix_high_rounded, color: Colors.teal, size: 18),
-                        label: const Text('Auto', style: TextStyle(color: Colors.teal, fontSize: 12)),
-                      ),
+                          },
+                          icon: const Icon(Icons.delete_outline, color: Colors.red),
+                        ),
                     ],
                   ),
-                ],
+                );
+              }),
+              TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _imageControllers.add(TextEditingController());
+                  });
+                },
+                icon: const Icon(Icons.add_photo_alternate_outlined),
+                label: const Text('Add Another Image'),
+                style: TextButton.styleFrom(foregroundColor: Colors.teal),
               ),
-              if (_imageController.text.isNotEmpty)
+              if (_imageControllers.any((c) => c.text.isNotEmpty))
                 Padding(
                   padding: const EdgeInsets.only(top: 16),
-                  child: Center(
-                    child: Container(
-                      width: 150,
-                      height: 150,
-                      clipBehavior: Clip.antiAlias,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: Image.network(
-                        _imageController.text,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const Icon(Icons.broken_image_outlined, size: 50, color: Colors.grey),
-                      ),
+                  child: SizedBox(
+                    height: 120,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _imageControllers.where((c) => c.text.isNotEmpty).length,
+                      itemBuilder: (context, index) {
+                        final validUrls = _imageControllers.where((c) => c.text.isNotEmpty).toList();
+                        return Container(
+                          width: 120,
+                          margin: const EdgeInsets.only(right: 12),
+                          clipBehavior: Clip.antiAlias,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Image.network(
+                            validUrls[index].text,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.broken_image_outlined, color: Colors.grey),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),

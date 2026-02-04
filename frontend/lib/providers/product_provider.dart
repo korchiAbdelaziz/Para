@@ -135,7 +135,7 @@ class ProductProvider with ChangeNotifier {
     return false;
   }
 
-  Future<bool> uploadBulk(List<int> fileBytes, String fileName, String? token) async {
+  Future<List<dynamic>?> uploadBulk(List<int> fileBytes, String fileName, String? token) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -158,7 +158,10 @@ class ProductProvider with ChangeNotifier {
 
       if (response.statusCode == 201) {
         await fetchProducts();
-        return true;
+        final List<dynamic> failedItems = jsonDecode(response.body);
+        _isLoading = false;
+        notifyListeners();
+        return failedItems;
       } else {
         _error = 'Failed to upload: ${response.statusCode}';
       }
@@ -168,7 +171,7 @@ class ProductProvider with ChangeNotifier {
 
     _isLoading = false;
     notifyListeners();
-    return false;
+    return null;
   }
 
   Future<void> fetchCategories() async {

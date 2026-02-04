@@ -5,12 +5,14 @@ import com.parashop.product_service.dto.ProductRequest;
 import com.parashop.product_service.dto.ProductResponse;
 import com.parashop.product_service.model.Category;
 import com.parashop.product_service.model.Product;
+import com.parashop.product_service.model.ProductImage;
 import com.parashop.product_service.repository.CategoryRepository;
 import com.parashop.product_service.repository.ProductRepository;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import com.opencsv.bean.HeaderColumnNameMappingStrategy;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -43,10 +45,23 @@ public class ProductService {
                 .name(productRequest.getName())
                 .description(productRequest.getDescription())
                 .price(productRequest.getPrice())
+                .discountPrice(productRequest.getDiscountPrice())
                 .productCode(productRequest.getProductCode())
-                .imageUrl(productRequest.getImageUrl())
                 .category(getOrCreateCategory(productRequest.getCategory()))
                 .build();
+
+        // Handle images
+        List<String> imageUrls = productRequest.getImageUrls();
+        if (imageUrls == null && productRequest.getImageUrlsCsv() != null) {
+            imageUrls = List.of(productRequest.getImageUrlsCsv().split(","));
+        }
+
+        if (imageUrls != null) {
+            List<ProductImage> productImages = imageUrls.stream()
+                    .map(url -> ProductImage.builder().imageUrl(url.trim()).product(product).build())
+                    .toList();
+            product.setImages(new ArrayList<>(productImages));
+        }
 
         productRepository.save(product);
         log.info("Produit {} est sauvegardé", product.getId());
@@ -68,9 +83,23 @@ public class ProductService {
         product.setName(productRequest.getName());
         product.setDescription(productRequest.getDescription());
         product.setPrice(productRequest.getPrice());
+        product.setDiscountPrice(productRequest.getDiscountPrice());
         product.setProductCode(productRequest.getProductCode());
-        product.setImageUrl(productRequest.getImageUrl());
         product.setCategory(getOrCreateCategory(productRequest.getCategory()));
+
+        // Update images
+        List<String> imageUrls = productRequest.getImageUrls();
+        if (imageUrls == null && productRequest.getImageUrlsCsv() != null) {
+            imageUrls = List.of(productRequest.getImageUrlsCsv().split(","));
+        }
+
+        if (imageUrls != null) {
+            product.getImages().clear();
+            List<ProductImage> newImages = imageUrls.stream()
+                    .map(url -> ProductImage.builder().imageUrl(url.trim()).product(product).build())
+                    .toList();
+            product.getImages().addAll(newImages);
+        }
 
         productRepository.save(product);
         log.info("Produit {} est mis à jour", id);
@@ -81,8 +110,9 @@ public class ProductService {
         log.info("Produit {} est supprimé", id);
     }
 
-    public void uploadBulk(MultipartFile file) {
+    public List<ProductRequest> uploadBulk(MultipartFile file) {
         log.info("Début de l'import bulk pour le fichier: {}", file.getOriginalFilename());
+        List<ProductRequest> invalidEntries = new ArrayList<>();
         try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
             HeaderColumnNameMappingStrategy<ProductRequest> strategy = new HeaderColumnNameMappingStrategy<>();
             strategy.setType(ProductRequest.class);
@@ -98,22 +128,30 @@ public class ProductService {
             int failCount = 0;
 
             for (ProductRequest request : productRequests) {
+                if (isInvalid(request)) {
+                    invalidEntries.add(request);
+                    continue;
+                }
                 try {
                     createProduct(request);
                     successCount++;
                 } catch (Exception e) {
-                    failCount++;
+                    invalidEntries.add(request);
                     log.error("Erreur lors de la création du produit {}: {}", request.getName(), e.getMessage());
                 }
             }
-            log.info("Import terminé: {} succès, {} échecs", successCount, failCount);
-            if (successCount == 0 && !productRequests.isEmpty()) {
-                throw new RuntimeException("Tous les produits ont échoué lors de l'import");
-            }
+            log.info("Import terminé: {} succès, {} à corriger", successCount, invalidEntries.size());
+            return invalidEntries;
         } catch (Exception e) {
             log.error("Erreur critique lors de l'import CSV: {}", e.getMessage(), e);
             throw new RuntimeException("Erreur de traitement du fichier CSV: " + e.getMessage());
         }
+    }
+
+    private boolean isInvalid(ProductRequest request) {
+        return request.getName() == null || request.getName().isEmpty() ||
+               request.getPrice() == null ||
+               request.getProductCode() == null || request.getProductCode().isEmpty();
     }
 
     public String uploadImage(MultipartFile file) {
@@ -147,8 +185,9 @@ public class ProductService {
                 .name(product.getName())
                 .description(product.getDescription())
                 .price(product.getPrice())
+                .discountPrice(product.getDiscountPrice())
                 .productCode(product.getProductCode())
-                .imageUrl(product.getImageUrl())
+                .imageUrls(product.getImages() != null ? product.getImages().stream().map(ProductImage::getImageUrl).toList() : List.of())
                 .category(product.getCategory() != null ? product.getCategory().getName() : null)
                 .isInStock(isInStock)
                 .build();

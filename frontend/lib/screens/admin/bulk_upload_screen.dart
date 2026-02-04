@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../providers/product_provider.dart';
 import '../../providers/auth_provider.dart';
+import 'bulk_correction_screen.dart';
 
 class BulkUploadScreen extends StatefulWidget {
   const BulkUploadScreen({super.key});
@@ -13,6 +14,7 @@ class BulkUploadScreen extends StatefulWidget {
 
 class _BulkUploadScreenState extends State<BulkUploadScreen> {
   PlatformFile? _selectedFile;
+  bool _isUploading = false;
 
   Future<void> _pickFile() async {
     final result = await FilePicker.platform.pickFiles(
@@ -31,24 +33,63 @@ class _BulkUploadScreenState extends State<BulkUploadScreen> {
   Future<void> _upload() async {
     if (_selectedFile == null) return;
 
+    setState(() => _isUploading = true);
     final provider = Provider.of<ProductProvider>(context, listen: false);
     final auth = Provider.of<AuthProvider>(context, listen: false);
 
-    final success = await provider.uploadBulk(
+    final failedItems = await provider.uploadBulk(
       _selectedFile!.bytes!,
       _selectedFile!.name,
       auth.user?.token,
     );
 
+    setState(() => _isUploading = false);
+
     if (mounted) {
-      if (success) {
-        _showSuccessDialog();
+      if (failedItems != null) {
+        if (failedItems.isEmpty) {
+          _showSuccessDialog();
+        } else {
+          _showPartialSuccessDialog(failedItems);
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Bulk upload failed'), backgroundColor: Colors.redAccent),
         );
       }
     }
+  }
+
+  void _showPartialSuccessDialog(List<dynamic> failedItems) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Action Required'),
+        content: Text('${failedItems.length} items have missing or invalid data. Would you like to correct them manually?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.pop(context);
+            },
+            child: const Text('Later'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => BulkCorrectionScreen(invalidItems: failedItems),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, foregroundColor: Colors.white),
+            child: const Text('Correct Now'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showSuccessDialog() {

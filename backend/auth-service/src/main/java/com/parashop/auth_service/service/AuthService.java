@@ -19,13 +19,13 @@ public class AuthService {
 
     public List<UserResponse> getAllUsers() {
         return repository.findAll().stream()
-                .map(user -> new UserResponse(user.getId(), user.getName(), user.getEmail(), user.getPhone(), user.getAddress()))
+                .map(user -> new UserResponse(user.getId(), user.getName(), user.getEmail(), user.getPhone(), user.getAddress(), user.getProfileImageUrl()))
                 .toList();
     }
 
     public UserResponse getUserByUsername(String username) {
         return repository.findByName(username)
-                .map(user -> new UserResponse(user.getId(), user.getName(), user.getEmail(), user.getPhone(), user.getAddress()))
+                .map(user -> new UserResponse(user.getId(), user.getName(), user.getEmail(), user.getPhone(), user.getAddress(), user.getProfileImageUrl()))
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
     }
 
@@ -36,6 +36,7 @@ public class AuthService {
         user.setEmail(profile.getEmail());
         user.setPhone(profile.getPhone());
         user.setAddress(profile.getAddress());
+        user.setProfileImageUrl(profile.getProfileImageUrl());
         
         repository.save(user);
         return "Profil mis à jour avec succès";

@@ -72,10 +72,11 @@ class AuthProvider with ChangeNotifier {
     return false;
   }
 
-  Future<void> updateProfile(String name, String email, String phone, String address) async {
+  Future<void> updateProfile(String name, String email, String phone, String address, {String? profileImageUrl}) async {
     if (_user == null || _user!.token == null) return;
 
     _isLoading = true;
+    _error = null;
     notifyListeners();
 
     try {
@@ -90,6 +91,7 @@ class AuthProvider with ChangeNotifier {
           'email': email,
           'phone': phone,
           'address': address,
+          'profileImageUrl': profileImageUrl,
         }),
       );
 
@@ -98,9 +100,10 @@ class AuthProvider with ChangeNotifier {
           email: email,
           phone: phone,
           address: address,
+          profileImageUrl: profileImageUrl,
         );
       } else {
-        _error = 'Failed to update profile';
+        _error = 'Failed to update profile: ${response.statusCode}';
       }
     } catch (e) {
       _error = e.toString();

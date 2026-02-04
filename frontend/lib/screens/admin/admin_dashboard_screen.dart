@@ -53,52 +53,22 @@ class AdminDashboardScreen extends StatelessWidget {
               children: [
                 _buildDashboardCard(
                   context,
-                  'Products',
-                  'Manage inventory',
+                  'Inventory',
+                  'Manage Products, Stocks & Imports',
                   Icons.inventory_2_rounded,
                   [Colors.teal.shade400, Colors.teal.shade700],
                   () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const ProductManagementScreen()),
+                    MaterialPageRoute(builder: (context) => const InventoryManagementScreen()),
                   ),
                 ),
                 _buildDashboardCard(
                   context,
-                  'Imports',
-                  'Bulk CSV Upload',
-                  Icons.auto_awesome_motion_rounded,
-                  [Colors.indigo.shade400, Colors.indigo.shade700],
-                  () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const BulkUploadScreen()),
-                  ),
-                ),
-                _buildDashboardCard(
-                  context,
-                  'Users',
-                  'Registered clients',
+                  'Users & Orders',
+                  'Client Stats & Validation',
                   Icons.people_alt_rounded,
                   [Colors.orange.shade400, Colors.orange.shade700],
                   () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (context) => const UserManagementScreen()),
-                  ),
-                ),
-                _buildDashboardCard(
-                  context,
-                  'All Orders',
-                  'System history',
-                  Icons.receipt_long_rounded,
-                  [Colors.deepPurple.shade400, Colors.deepPurple.shade700],
-                  () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const OrderManagementScreen()),
-                  ),
-                ),
-                _buildDashboardCard(
-                  context,
-                  'Stock Units',
-                  'Cartons & Pieces',
-                  Icons.warehouse_rounded,
-                  [Colors.blueGrey.shade400, Colors.blueGrey.shade700],
-                  () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const InventoryManagementScreen()),
                   ),
                 ),
               ],

@@ -20,8 +20,11 @@ public class Product {
     private String name;
     private String description;
     private BigDecimal price;
+    private BigDecimal discountPrice;
     private String productCode;
-    private String imageUrl;
+    
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<ProductImage> images;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")

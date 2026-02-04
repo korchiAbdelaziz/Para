@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../providers/inventory_provider.dart';
 import '../../providers/product_provider.dart';
 import '../../providers/auth_provider.dart';
+import 'product_form_screen.dart';
+import 'bulk_upload_screen.dart';
 
 class InventoryManagementScreen extends StatefulWidget {
   const InventoryManagementScreen({super.key});
@@ -24,20 +26,53 @@ class _InventoryManagementScreenState extends State<InventoryManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = Provider.of<AuthProvider>(context);
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: const Text('Stock Management', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.teal.shade900,
-        elevation: 0,
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        appBar: AppBar(
+          title: const Text('Inventory & Stocks', style: TextStyle(fontWeight: FontWeight.bold)),
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.teal.shade900,
+          elevation: 0,
+          bottom: const TabBar(
+            labelColor: Colors.teal,
+            unselectedLabelColor: Colors.grey,
+            indicatorColor: Colors.teal,
+            tabs: [
+              Tab(icon: Icon(Icons.list_alt_rounded), text: 'Stock List'),
+              Tab(icon: Icon(Icons.add_box_outlined), text: 'Manual Add'),
+              Tab(icon: Icon(Icons.upload_file_rounded), text: 'Bulk Upload'),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _buildStockList(),
+            const ProductFormScreen(),
+            const BulkUploadScreen(),
+          ],
+        ),
       ),
-      body: Consumer2<InventoryProvider, ProductProvider>(
+    );
+  }
+
+  Widget _buildStockList() {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    return RefreshIndicator(
+      onRefresh: () async {
+        final token = auth.user?.token;
+        await Provider.of<InventoryProvider>(context, listen: false).fetchInventory(token);
+        await Provider.of<ProductProvider>(context, listen: false).fetchProducts(filterStock: false);
+      },
+      child: Consumer2<InventoryProvider, ProductProvider>(
         builder: (context, inventoryProvider, productProvider, _) {
           if (inventoryProvider.isLoading || productProvider.isLoading) {
             return const Center(child: CircularProgressIndicator(color: Colors.teal));
+          }
+
+          if (productProvider.products.isEmpty) {
+            return const Center(child: Text('No products in inventory.'));
           }
 
           return ListView.builder(
@@ -66,18 +101,35 @@ class _InventoryManagementScreenState extends State<InventoryManagementScreen> {
                       color: Colors.teal.shade50,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.inventory_2_outlined, color: Colors.teal),
+                    child: (product.imageUrl != null && product.imageUrl!.isNotEmpty)
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.network(product.imageUrl!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.inventory_2_outlined, color: Colors.teal)),
+                        )
+                      : const Icon(Icons.inventory_2_outlined, color: Colors.teal),
                   ),
                   title: Text(product.name, style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text('SKU: ${product.sku} | In Stock: ${inventory.quantity}'),
-                  trailing: ElevatedButton(
-                    onPressed: () => _showAddStockDialog(context, product.sku, auth.user?.token),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    child: const Text('Add Stock'),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit_note_rounded, color: Colors.teal),
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) => ProductFormScreen(product: product)),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => _showAddStockDialog(context, product.sku, auth.user?.token),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.teal,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
+                        child: const Text('Stock+'),
+                      ),
+                    ],
                   ),
                 ),
               );

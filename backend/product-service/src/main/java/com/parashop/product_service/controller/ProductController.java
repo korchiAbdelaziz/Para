@@ -42,8 +42,8 @@ public class ProductController {
 
     @PostMapping("/bulk")
     @ResponseStatus(HttpStatus.CREATED)
-    public void bulkUpload(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
-        productService.uploadBulk(file);
+    public List<ProductRequest> bulkUpload(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        return productService.uploadBulk(file);
     }
 
     @PostMapping("/upload-image")

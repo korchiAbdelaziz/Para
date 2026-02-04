@@ -126,4 +126,77 @@ class OrderProvider with ChangeNotifier {
     notifyListeners();
     return false;
   }
+
+  Future<bool> validateOrder(String orderId, String? token) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$_orderBaseUrl/validate/$orderId'),
+        headers: token != null ? {'Authorization': 'Bearer $token'} : {},
+      );
+      if (response.statusCode == 200) {
+        // Update local status if found
+        int index = _orders.indexWhere((o) => o.id == orderId);
+        if (index != -1) {
+          _orders[index] = Order(
+            id: _orders[index].id,
+            orderNumber: _orders[index].orderNumber,
+            username: _orders[index].username,
+            status: 'VALIDATED',
+            items: _orders[index].items,
+          );
+          notifyListeners();
+        }
+        return true;
+      }
+    } catch (e) {
+      _error = e.toString();
+    }
+    return false;
+  }
+
+  Future<bool> cancelOrder(String orderId, String? token) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$_orderBaseUrl/cancel/$orderId'),
+        headers: token != null ? {'Authorization': 'Bearer $token'} : {},
+      );
+      if (response.statusCode == 200) {
+        int index = _orders.indexWhere((o) => o.id == orderId);
+        if (index != -1) {
+          _orders[index] = Order(
+            id: _orders[index].id,
+            orderNumber: _orders[index].orderNumber,
+            username: _orders[index].username,
+            status: 'CANCELLED',
+            items: _orders[index].items,
+          );
+          notifyListeners();
+        }
+        return true;
+      }
+    } catch (e) {
+      _error = e.toString();
+    }
+    return false;
+  }
+
+  Future<void> fetchUserRanking(String? token) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      final response = await http.get(
+        Uri.parse('$_orderBaseUrl/stats'),
+        headers: token != null ? {'Authorization': 'Bearer $token'} : {},
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        _users = data.map((u) => u as Map<String, dynamic>).toList();
+      }
+    } catch (e) {
+      _error = e.toString();
+    }
+    _isLoading = false;
+    notifyListeners();
+  }
 }

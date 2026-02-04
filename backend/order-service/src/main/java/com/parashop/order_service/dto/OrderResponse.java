@@ -13,5 +13,6 @@ public class OrderResponse {
     private Long id;
     private String orderNumber;
     private String username;
+    private String status;
     private List<OrderLineItemsResponse> orderLineItemsList;
 }

@@ -12,8 +12,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +43,7 @@ public class OrderService {
                 .allMatch(item -> inventoryClient.isInStock(item.getProductCode(), item.getQuantity()));
 
         if (allInStock) {
+            order.setStatus("PENDING_VALIDATION");
             orderRepository.save(order);
             return "Commande passée avec succès !";
         } else {
@@ -60,11 +64,56 @@ public class OrderService {
                 .toList();
     }
 
+    public void validateOrder(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Commande non trouvée"));
+        order.setStatus("VALIDATED");
+        orderRepository.save(order);
+    }
+
+    public void cancelOrder(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Commande non trouvée"));
+        
+        if ("CANCELLED".equals(order.getStatus())) {
+            throw new RuntimeException("Commande déjà annulée");
+        }
+
+        order.setStatus("CANCELLED");
+        orderRepository.save(order);
+
+        // Restaurer le stock pour chaque article
+        for (OrderLineItems item : order.getOrderLineItemsList()) {
+            Map<String, Object> updateDto = new HashMap<>();
+            updateDto.put("productCode", item.getProductCode());
+            updateDto.put("quantity", item.getQuantity());
+            updateDto.put("unit", "PIECE");
+            inventoryClient.updateInventory(updateDto);
+        }
+    }
+
+    public List<Map<String, Object>> getUserStats() {
+        // Simple aggregation by username
+        Map<String, Long> orderCounts = orderRepository.findAll().stream()
+                .collect(Collectors.groupingBy(Order::getUsername, Collectors.counting()));
+        
+        return orderCounts.entrySet().stream()
+                .map(e -> {
+                    Map<String, Object> stat = new HashMap<>();
+                    stat.put("username", e.getKey());
+                    stat.put("orderCount", e.getValue());
+                    return stat;
+                })
+                .sorted((a, b) -> ((Long) b.get("orderCount")).compareTo((Long) a.get("orderCount")))
+                .toList();
+    }
+
     private OrderResponse mapToResponse(Order order) {
         OrderResponse response = new OrderResponse();
         response.setId(order.getId());
         response.setOrderNumber(order.getOrderNumber());
         response.setUsername(order.getUsername());
+        response.setStatus(order.getStatus());
         response.setOrderLineItemsList(order.getOrderLineItemsList().stream()
                 .map(item -> new OrderLineItemsResponse(
                         item.getId(),
