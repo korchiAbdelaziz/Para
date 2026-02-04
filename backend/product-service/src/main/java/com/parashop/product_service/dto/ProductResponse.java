@@ -22,4 +22,5 @@ public class ProductResponse {
     private List<String> imageUrls;
     private String category;
     private boolean isInStock;
+    private Integer quantity;
 }

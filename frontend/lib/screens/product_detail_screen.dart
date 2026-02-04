@@ -6,6 +6,7 @@ import '../providers/cart_provider.dart';
 import 'cart_screen.dart';
 import 'admin/product_form_screen.dart';
 import 'package:provider/provider.dart';
+import '../utils/custom_notification.dart';
 
 class ProductDetailScreen extends StatelessWidget {
   final Product product;
@@ -199,13 +200,30 @@ class ProductDetailScreen extends StatelessWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
+                      if (product.stock <= 0) {
+                         showTopNotification(
+                          context,
+                          'Out of stock!',
+                          isError: true,
+                          actionLabel: 'Cancel',
+                          onAction: () {},
+                        );
+                        return;
+                      }
                       final cart = Provider.of<CartProvider>(context, listen: false);
+                      // We should ideally check if cart quantity + 1 > stock, but cart provider doesn't expose item count easily by ID without lookup.
+                      // For now, basic check.
                       cart.addItem(product);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Added to cart'),
-                          duration: Duration(seconds: 2),
-                        ),
+                      showTopNotification(
+                        context,
+                        'Added to cart',
+                        isError: false,
+                        actionLabel: 'VIEW',
+                        onAction: () {
+                           Navigator.of(context).push(
+                            MaterialPageRoute(builder: (context) => const CartScreen()),
+                          );
+                        },
                       );
                     },
                     style: ElevatedButton.styleFrom(

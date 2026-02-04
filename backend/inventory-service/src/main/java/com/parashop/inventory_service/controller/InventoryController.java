@@ -29,4 +29,9 @@ public class InventoryController {
     public InventoryItem update(@RequestBody InventoryUpdateDto updateDto) {
         return inventoryService.updateInventory(updateDto);
     }
+
+    @GetMapping("/quantity")
+    public Integer getQuantity(@RequestParam String productCode) {
+        return inventoryService.getQuantity(productCode);
+    }
 }

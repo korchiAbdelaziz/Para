@@ -15,4 +15,7 @@ public interface InventoryClient {
 
     @PostMapping("/api/inventory/update")
     void updateInventory(@RequestBody Map<String, Object> updateDto);
+
+    @GetMapping("/api/inventory/quantity")
+    Integer getQuantity(@RequestParam String productCode);
 }

@@ -202,11 +202,13 @@ public class ProductService {
 
     private ProductResponse mapToProductResponse(Product product) {
         boolean isInStock = false;
+        Integer quantity = 0;
         try {
-            // Vérification du stock via Feign Client (demandant 1 unité par défaut)
-            isInStock = inventoryClient.isInStock(product.getProductCode(), 1);
+            // Fetch actual quantity from inventory service
+            quantity = inventoryClient.getQuantity(product.getProductCode());
+            isInStock = quantity > 0;
         } catch (Exception e) {
-            log.error("Erreur lors de la vérification du stock pour {}: {}", product.getProductCode(), e.getMessage());
+            log.error("Erreur lors de la récupération du stock pour {}: {}", product.getProductCode(), e.getMessage());
         }
 
         return ProductResponse.builder()
@@ -219,6 +221,7 @@ public class ProductService {
                 .imageUrls(product.getImages() != null ? product.getImages().stream().map(ProductImage::getImageUrl).toList() : List.of())
                 .category(product.getCategory() != null ? product.getCategory().getName() : null)
                 .isInStock(isInStock)
+                .quantity(quantity)
                 .build();
     }
 

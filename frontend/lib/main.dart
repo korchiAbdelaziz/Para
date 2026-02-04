@@ -7,6 +7,7 @@ import 'providers/product_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/order_provider.dart';
 import 'providers/inventory_provider.dart';
+import 'theme/app_theme.dart';
 
 void main() {
   runApp(
@@ -29,11 +30,8 @@ class ParaShopApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'ParaShop',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
-        useMaterial3: true,
-      ),
+      title: "Dani's Parasante",
+      theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
       home: Consumer<AuthProvider>(
         builder: (context, auth, _) {

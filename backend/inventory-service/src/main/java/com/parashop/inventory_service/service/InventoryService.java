@@ -37,4 +37,11 @@ public class InventoryService {
         item.setQuantity(item.getQuantity() + totalQuantityToAdd);
         return inventoryRepository.save(item);
     }
+
+    @Transactional(readOnly = true)
+    public Integer getQuantity(String productCode) {
+        return inventoryRepository.findByProductCode(productCode)
+                .map(InventoryItem::getQuantity)
+                .orElse(0);
+    }
 }

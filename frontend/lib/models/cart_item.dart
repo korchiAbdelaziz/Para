@@ -6,6 +6,7 @@ class CartItem {
   final int quantity;
   final double price;
   final String? imageUrl;
+  final int stock;
 
   CartItem({
     required this.id,
@@ -14,6 +15,7 @@ class CartItem {
     required this.title,
     required this.quantity,
     required this.price,
+    required this.stock,
     this.imageUrl,
   });
 
@@ -24,6 +26,7 @@ class CartItem {
     String? title,
     int? quantity,
     double? price,
+    int? stock,
     String? imageUrl,
   }) {
     return CartItem(
@@ -33,6 +36,7 @@ class CartItem {
       title: title ?? this.title,
       quantity: quantity ?? this.quantity,
       price: price ?? this.price,
+      stock: stock ?? this.stock,
       imageUrl: imageUrl ?? this.imageUrl,
     );
   }

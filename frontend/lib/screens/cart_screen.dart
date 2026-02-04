@@ -4,6 +4,8 @@ import '../providers/cart_provider.dart';
 import '../providers/order_provider.dart';
 import '../providers/auth_provider.dart';
 import 'orders_screen.dart';
+import '../utils/custom_notification.dart';
+import '../models/cart_item.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -126,8 +128,10 @@ class CartScreen extends StatelessWidget {
   }
 }
 
+
+
 class _CartItemWidget extends StatelessWidget {
-  final dynamic item;
+  final CartItem item;
   final String productId;
 
   const _CartItemWidget({required this.item, required this.productId});
@@ -135,7 +139,7 @@ class _CartItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context, listen: false);
-    
+
     return Dismissible(
       key: ValueKey(item.id),
       background: Container(
@@ -191,7 +195,19 @@ class _CartItemWidget extends StatelessWidget {
                 ),
                 IconButton(
                   icon: const Icon(Icons.add_circle_outline, color: Colors.teal),
-                  onPressed: () => cart.incrementItemQuantity(productId),
+                  onPressed: () {
+                    if (item.quantity + 1 > item.stock) {
+                       showTopNotification(
+                         context, 
+                         'Sorry, only ${item.stock} items available in stock.', 
+                         isError: true,
+                         actionLabel: 'Cancel', // Changed from OK to Cancel per request
+                         onAction: () {}
+                       );
+                    } else {
+                      cart.incrementItemQuantity(productId);
+                    }
+                  },
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
