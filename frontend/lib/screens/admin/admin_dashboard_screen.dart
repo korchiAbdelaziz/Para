@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'product_management_screen.dart';
 import 'bulk_upload_screen.dart';
+import 'user_management_screen.dart';
+import 'order_management_screen.dart';
+import 'inventory_management_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -66,6 +69,36 @@ class AdminDashboardScreen extends StatelessWidget {
                   [Colors.indigo.shade400, Colors.indigo.shade700],
                   () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (context) => const BulkUploadScreen()),
+                  ),
+                ),
+                _buildDashboardCard(
+                  context,
+                  'Users',
+                  'Registered clients',
+                  Icons.people_alt_rounded,
+                  [Colors.orange.shade400, Colors.orange.shade700],
+                  () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const UserManagementScreen()),
+                  ),
+                ),
+                _buildDashboardCard(
+                  context,
+                  'All Orders',
+                  'System history',
+                  Icons.receipt_long_rounded,
+                  [Colors.deepPurple.shade400, Colors.deepPurple.shade700],
+                  () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const OrderManagementScreen()),
+                  ),
+                ),
+                _buildDashboardCard(
+                  context,
+                  'Stock Units',
+                  'Cartons & Pieces',
+                  Icons.warehouse_rounded,
+                  [Colors.blueGrey.shade400, Colors.blueGrey.shade700],
+                  () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const InventoryManagementScreen()),
                   ),
                 ),
               ],

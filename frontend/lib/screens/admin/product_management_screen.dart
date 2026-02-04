@@ -11,6 +11,11 @@ class ProductManagementScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
+    // Ensure we show all products (even out of stock) for management
+    Future.microtask(() => 
+      Provider.of<ProductProvider>(context, listen: false).fetchProducts(filterStock: false)
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),

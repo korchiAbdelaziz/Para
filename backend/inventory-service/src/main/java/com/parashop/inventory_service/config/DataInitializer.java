@@ -19,23 +19,12 @@ public class DataInitializer {
     public CommandLineRunner loadData() {
         return args -> {
             if (inventoryRepository.count() == 0) {
-                InventoryItem i1 = InventoryItem.builder()
-                        .productCode("DELL-XPS-15")
-                        .quantity(10)
-                        .build();
-
-                InventoryItem i2 = InventoryItem.builder()
-                        .productCode("IPHONE-15-PRO")
-                        .quantity(20)
-                        .build();
-
-                InventoryItem i3 = InventoryItem.builder()
-                        .productCode("GALAXY-BUDS-2")
-                        .quantity(50)
-                        .build();
-
-                inventoryRepository.saveAll(List.of(i1, i2, i3));
-                System.out.println("Test data inserted for inventory-service");
+                inventoryRepository.save(new InventoryItem(null, "EUC_001", 100));
+                inventoryRepository.save(new InventoryItem(null, "EUC_002", 50));
+                inventoryRepository.save(new InventoryItem(null, "VIC_001", 30));
+                inventoryRepository.save(new InventoryItem(null, "LAR_001", 80));
+                
+                System.out.println("Parapharmacy inventory data inserted successfully!");
             }
         };
     }

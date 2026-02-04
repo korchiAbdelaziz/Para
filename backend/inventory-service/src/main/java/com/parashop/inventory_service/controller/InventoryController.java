@@ -1,5 +1,6 @@
 package com.parashop.inventory_service.controller;
 
+import com.parashop.inventory_service.dto.InventoryUpdateDto;
 import com.parashop.inventory_service.model.InventoryItem;
 import com.parashop.inventory_service.service.InventoryService;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +26,7 @@ public class InventoryController {
     }
 
     @PostMapping("/update")
-    public InventoryItem update(@RequestParam String productCode, @RequestParam Integer quantity) {
-        return inventoryService.updateInventory(productCode, quantity);
+    public InventoryItem update(@RequestBody InventoryUpdateDto updateDto) {
+        return inventoryService.updateInventory(updateDto);
     }
 }

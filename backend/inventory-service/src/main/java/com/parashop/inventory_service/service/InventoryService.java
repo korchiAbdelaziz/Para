@@ -1,5 +1,6 @@
 package com.parashop.inventory_service.service;
 
+import com.parashop.inventory_service.dto.InventoryUpdateDto;
 import com.parashop.inventory_service.model.InventoryItem;
 import com.parashop.inventory_service.repository.InventoryRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,10 +26,15 @@ public class InventoryService {
         return inventoryRepository.findAll();
     }
 
-    public InventoryItem updateInventory(String productCode, Integer quantity) {
-        InventoryItem item = inventoryRepository.findByProductCode(productCode)
-                .orElse(InventoryItem.builder().productCode(productCode).quantity(0).build());
-        item.setQuantity(item.getQuantity() + quantity);
+    public InventoryItem updateInventory(InventoryUpdateDto updateDto) {
+        int totalQuantityToAdd = updateDto.getQuantity();
+        if ("CARTON".equalsIgnoreCase(updateDto.getUnit()) && updateDto.getPiecesPerCarton() != null) {
+            totalQuantityToAdd = updateDto.getQuantity() * updateDto.getPiecesPerCarton();
+        }
+
+        InventoryItem item = inventoryRepository.findByProductCode(updateDto.getProductCode())
+                .orElse(InventoryItem.builder().productCode(updateDto.getProductCode()).quantity(0).build());
+        item.setQuantity(item.getQuantity() + totalQuantityToAdd);
         return inventoryRepository.save(item);
     }
 }

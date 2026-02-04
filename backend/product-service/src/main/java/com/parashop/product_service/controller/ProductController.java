@@ -24,8 +24,8 @@ public class ProductController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<ProductResponse> getAllProducts() {
-        return productService.getAllProducts();
+    public List<ProductResponse> getAllProducts(@RequestParam(required = false, defaultValue = "false") boolean filterStock) {
+        return productService.getAllProducts(filterStock);
     }
 
     @PutMapping("/{id}")

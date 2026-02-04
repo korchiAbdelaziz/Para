@@ -8,6 +8,7 @@
     <file type="web" url="file://$PROJECT_DIR$/backend/gateway-service" />
     <file type="web" url="file://$PROJECT_DIR$/backend/inventory-service" />
     <file type="web" url="file://$PROJECT_DIR$/backend/loyalty-service" />
+    <file type="web" url="file://$PROJECT_DIR$/backend/order-service" />
     <file type="web" url="file://$PROJECT_DIR$/backend/product-service" />
   </component>
   <component name="ProjectRootManager" version="2">

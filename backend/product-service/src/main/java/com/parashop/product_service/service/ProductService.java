@@ -52,10 +52,13 @@ public class ProductService {
         log.info("Produit {} est sauvegardé", product.getId());
     }
 
-    public List<ProductResponse> getAllProducts() {
+    public List<ProductResponse> getAllProducts(boolean filterStock) {
         List<Product> products = productRepository.findAll();
 
-        return products.stream().map(this::mapToProductResponse).toList();
+        return products.stream()
+                .map(this::mapToProductResponse)
+                .filter(response -> !filterStock || response.isInStock())
+                .toList();
     }
 
     public void updateProduct(Long id, ProductRequest productRequest) {

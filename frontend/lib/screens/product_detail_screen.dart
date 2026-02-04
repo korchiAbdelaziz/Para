@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../models/product.dart';
 import '../providers/auth_provider.dart';
 import '../providers/product_provider.dart';
+import '../providers/cart_provider.dart';
+import 'cart_screen.dart';
 import 'admin/product_form_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -13,7 +15,28 @@ class ProductDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(product.name)),
+      appBar: AppBar(
+        title: Text(product.name),
+        actions: [
+          Consumer<CartProvider>(
+            builder: (_, cart, ch) => Badge(
+              label: Text(cart.totalQuantity.toString()),
+              isLabelVisible: cart.totalQuantity > 0,
+              backgroundColor: Colors.teal.shade700,
+              child: ch,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.shopping_cart),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const CartScreen()),
+                );
+              },
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -109,9 +132,13 @@ class ProductDetailScreen extends StatelessWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      // Add to cart logic
+                      final cart = Provider.of<CartProvider>(context, listen: false);
+                      cart.addItem(product);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Added to cart')),
+                        const SnackBar(
+                          content: Text('Added to cart'),
+                          duration: Duration(seconds: 2),
+                        ),
                       );
                     },
                     style: ElevatedButton.styleFrom(

@@ -8,23 +8,30 @@ import 'auth_provider.dart';
 class ProductProvider with ChangeNotifier {
   List<Product> _products = [];
   List<String> _categories = [];
+  String? _selectedCategory;
   bool _isLoading = false;
   String? _error;
 
-  List<Product> get products => _products;
+  List<Product> get products {
+    if (_selectedCategory == null || _selectedCategory == 'All') {
+      return _products;
+    }
+    return _products.where((p) => p.category == _selectedCategory).toList();
+  }
   List<String> get categories => _categories;
+  String? get selectedCategory => _selectedCategory;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
   final String _baseUrl = 'http://localhost:8888/api/product';
 
-  Future<void> fetchProducts() async {
+  Future<void> fetchProducts({bool filterStock = false}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final response = await http.get(Uri.parse(_baseUrl));
+      final response = await http.get(Uri.parse('$_baseUrl?filterStock=$filterStock'));
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
@@ -170,13 +177,18 @@ class ProductProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data is List) {
-          _categories = data.map((e) => e.toString()).toList();
+          _categories = ['All', ...data.map((e) => e.toString())];
         }
         notifyListeners();
       }
     } catch (e) {
-      print('Error fetching categories: $e'); // Changed from log.error to print
+      print('Error fetching categories: $e');
     }
+  }
+
+  void setCategory(String? category) {
+    _selectedCategory = category;
+    notifyListeners();
   }
 
   Future<String?> uploadProductImage(List<int> fileBytes, String fileName, String? token) async {

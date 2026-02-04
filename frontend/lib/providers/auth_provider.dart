@@ -33,15 +33,29 @@ class AuthProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        _user = User(
-          id: '1', // Placeholder or extract from JWT
-          username: username,
-          email: '',
-          token: data['token'] ?? data['access_token'],
+        final token = data['token'] ?? data['access_token'];
+        
+        // Fetch full profile info
+        final profileResponse = await http.get(
+          Uri.parse('$_baseUrl/user/$username'),
+          headers: {'Authorization': 'Bearer $token'},
         );
+
+        if (profileResponse.statusCode == 200) {
+          final profileData = jsonDecode(profileResponse.body);
+          _user = User.fromJson({...profileData, 'token': token});
+        } else {
+           _user = User(
+            id: '1',
+            username: username,
+            email: '',
+            token: token,
+          );
+        }
         
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', _user!.token!);
+        await prefs.setString('token', token);
+        await prefs.setString('username', username);
         
         _isLoading = false;
         notifyListeners();
@@ -58,10 +72,68 @@ class AuthProvider with ChangeNotifier {
     return false;
   }
 
+  Future<void> updateProfile(String name, String email, String phone, String address) async {
+    if (_user == null || _user!.token == null) return;
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await http.put(
+        Uri.parse('$_baseUrl/profile'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${_user!.token}',
+        },
+        body: jsonEncode({
+          'name': name,
+          'email': email,
+          'phone': phone,
+          'address': address,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        _user = _user!.copyWith(
+          email: email,
+          phone: phone,
+          address: address,
+        );
+      } else {
+        _error = 'Failed to update profile';
+      }
+    } catch (e) {
+      _error = e.toString();
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> fetchUserProfile() async {
+    if (_user == null || _user!.token == null) return;
+
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/user/${_user!.username}'),
+        headers: {'Authorization': 'Bearer ${_user!.token}'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        _user = User.fromJson({...data, 'token': _user!.token});
+        notifyListeners();
+      }
+    } catch (e) {
+      print('Error fetching profile: $e');
+    }
+  }
+
   void logout() async {
     _user = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('token');
+    await prefs.remove('username');
     notifyListeners();
   }
 }
