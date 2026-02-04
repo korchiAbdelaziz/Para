@@ -65,6 +65,21 @@ public class ProductService {
 
         productRepository.save(product);
         log.info("Produit {} est sauvegardé", product.getId());
+
+        // Handle initial stock
+        if (productRequest.getQuantity() != null && productRequest.getQuantity() > 0) {
+            try {
+                java.util.Map<String, Object> stockUpdate = new java.util.HashMap<>();
+                stockUpdate.put("productCode", product.getProductCode());
+                stockUpdate.put("quantity", productRequest.getQuantity());
+                stockUpdate.put("unit", "PIECE"); // Default
+                inventoryClient.updateInventory(stockUpdate);
+                log.info("Stock initialisé pour le produit {}: {}", product.getProductCode(), productRequest.getQuantity());
+            } catch (Exception e) {
+                log.error("Erreur lors de l'initialisation du stock pour {}: {}", product.getProductCode(), e.getMessage());
+                // Non-blocking error
+            }
+        }
     }
 
     public List<ProductResponse> getAllProducts(boolean filterStock) {
@@ -103,6 +118,20 @@ public class ProductService {
 
         productRepository.save(product);
         log.info("Produit {} est mis à jour", id);
+
+        // Handle stock adjustment
+        if (productRequest.getQuantity() != null && productRequest.getQuantity() != 0) {
+            try {
+                java.util.Map<String, Object> stockUpdate = new java.util.HashMap<>();
+                stockUpdate.put("productCode", product.getProductCode());
+                stockUpdate.put("quantity", productRequest.getQuantity());
+                stockUpdate.put("unit", "PIECE");
+                inventoryClient.updateInventory(stockUpdate);
+                log.info("Stock ajusté pour le produit {}: {}", product.getProductCode(), productRequest.getQuantity());
+            } catch (Exception e) {
+                log.error("Erreur lors de l'ajustement du stock pour {}: {}", product.getProductCode(), e.getMessage());
+            }
+        }
     }
 
     public void deleteProduct(Long id) {

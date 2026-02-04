@@ -38,16 +38,32 @@ public class OrderService {
 
         order.setOrderLineItemsList(orderLineItems);
 
-        // Vérification du stock pour chaque article
-        boolean allInStock = order.getOrderLineItemsList().stream()
-                .allMatch(item -> inventoryClient.isInStock(item.getProductCode(), item.getQuantity()));
+        // 1. Agregation des quantités par produit pour validation globale
+        Map<String, Integer> productQuantities = new HashMap<>();
+        for (OrderLineItems item : orderLineItems) {
+            productQuantities.merge(item.getProductCode(), item.getQuantity(), Integer::sum);
+        }
+
+        // 2. Vérification du stock global
+        boolean allInStock = productQuantities.entrySet().stream()
+                .allMatch(entry -> inventoryClient.isInStock(entry.getKey(), entry.getValue()));
 
         if (allInStock) {
             order.setStatus("PENDING_VALIDATION");
             orderRepository.save(order);
+
+            // 3. Décrémenter le stock immédiatement (Temps Réel)
+            for (Map.Entry<String, Integer> entry : productQuantities.entrySet()) {
+                Map<String, Object> updateDto = new HashMap<>();
+                updateDto.put("productCode", entry.getKey());
+                updateDto.put("quantity", -entry.getValue()); // Négatif pour diminuer
+                updateDto.put("unit", "PIECE"); // Par défaut PIECE pour l'instant
+                inventoryClient.updateInventory(updateDto);
+            }
+
             return "Commande passée avec succès !";
         } else {
-            throw new IllegalArgumentException("Le produit n'est pas en stock, veuillez réessayer plus tard.");
+            throw new IllegalArgumentException("Stock insuffisant pour un ou plusieurs produits.");
         }
     }
 
@@ -122,6 +138,53 @@ public class OrderService {
                         item.getQuantity()
                 )).toList());
         return response;
+    }
+
+    public void updateOrderQuantity(Long orderId, String productCode, Integer newQuantity) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Commande non trouvée"));
+
+        if (!"PENDING_VALIDATION".equals(order.getStatus())) {
+            throw new RuntimeException("Impossible de modifier une commande validée ou annulée");
+        }
+
+        OrderLineItems itemToUpdate = order.getOrderLineItemsList().stream()
+                .filter(item -> item.getProductCode().equals(productCode))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Produit non trouvé dans la commande"));
+
+        int oldQuantity = itemToUpdate.getQuantity();
+        int delta = newQuantity - oldQuantity;
+
+        if (delta == 0) return;
+
+        // Si on augmente la quantité, vérifier le stock
+        if (delta > 0) {
+            boolean inStock = inventoryClient.isInStock(productCode, delta);
+            if (!inStock) {
+                throw new RuntimeException("Stock insuffisant pour augmenter la quantité");
+            }
+        }
+
+        // Mettre à jour le stock (négatif pour réduire le stock, positif pour restaurer)
+        Map<String, Object> updateDto = new HashMap<>();
+        updateDto.put("productCode", productCode);
+        updateDto.put("quantity", -delta); // Inverse du delta pour l'inventaire
+        updateDto.put("unit", "PIECE");
+        inventoryClient.updateInventory(updateDto);
+
+        // Mettre à jour la commande
+        itemToUpdate.setQuantity(newQuantity);
+        if (newQuantity <= 0) {
+            order.getOrderLineItemsList().remove(itemToUpdate);
+        }
+        
+        // Si la commande est vide, l'annuler
+        if (order.getOrderLineItemsList().isEmpty()) {
+            order.setStatus("CANCELLED");
+        }
+
+        orderRepository.save(order);
     }
 
     private OrderLineItems mapToEntity(OrderLineItemsDto orderLineItemsDto) {

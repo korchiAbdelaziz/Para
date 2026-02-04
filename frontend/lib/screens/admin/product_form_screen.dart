@@ -22,6 +22,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   late TextEditingController _priceController;
   late TextEditingController _discountPriceController;
   late TextEditingController _skuController;
+  late TextEditingController _stockController;
   late List<TextEditingController> _imageControllers;
   late TextEditingController _categoryController;
   bool _isCheckingUrl = false;
@@ -38,6 +39,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _priceController = TextEditingController(text: widget.product?.price.toString() ?? '');
     _discountPriceController = TextEditingController(text: widget.product?.discountPrice?.toString() ?? '');
     _skuController = TextEditingController(text: widget.product?.sku ?? '');
+    _stockController = TextEditingController(text: '0');
     _categoryController = TextEditingController(text: widget.product?.category ?? '');
     
     // Initialize image controllers
@@ -55,6 +57,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _priceController.dispose();
     _discountPriceController.dispose();
     _skuController.dispose();
+    _stockController.dispose();
     for (var c in _imageControllers) {
       c.dispose();
     }
@@ -76,6 +79,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       'price': double.parse(_priceController.text),
       'discountPrice': _discountPriceController.text.isNotEmpty ? double.parse(_discountPriceController.text) : null,
       'productCode': _skuController.text,
+      'quantity': int.tryParse(_stockController.text) ?? 0,
       'imageUrls': imageUrls,
       'category': _categoryController.text,
     };
@@ -252,11 +256,27 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 ],
               ),
               const SizedBox(height: 20),
-              _buildTextField(
-                controller: _skuController,
-                label: 'SKU / Code',
-                icon: Icons.qr_code_rounded,
-                validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildTextField(
+                      controller: _skuController,
+                      label: 'SKU / Code',
+                      icon: Icons.qr_code_rounded,
+                      validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildTextField(
+                      controller: _stockController,
+                      label: widget.product == null ? 'Initial Stock' : 'Adjust Stock (+/-)',
+                      icon: Icons.inventory_2_outlined,
+                      keyboardType: const TextInputType.numberWithOptions(signed: true),
+                      hintText: '0',
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 20),
               Text(

@@ -46,6 +46,12 @@ public class OrderController {
         orderService.cancelOrder(id);
     }
 
+    @PutMapping("/{id}/item")
+    @ResponseStatus(HttpStatus.OK)
+    public void updateOrderItem(@PathVariable Long id, @RequestParam String productCode, @RequestParam Integer quantity) {
+        orderService.updateOrderQuantity(id, productCode, quantity);
+    }
+
     @GetMapping("/stats")
     @ResponseStatus(HttpStatus.OK)
     public List<java.util.Map<String, Object>> getUserStats() {

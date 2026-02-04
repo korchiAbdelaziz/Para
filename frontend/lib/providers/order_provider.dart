@@ -7,11 +7,13 @@ import '../models/cart_item.dart';
 class OrderProvider with ChangeNotifier {
   List<Order> _orders = [];
   List<Map<String, dynamic>> _users = [];
+  List<Map<String, dynamic>>? _userStats;
   bool _isLoading = false;
   String? _error;
 
   List<Order> get orders => _orders;
   List<Map<String, dynamic>> get users => _users;
+  List<Map<String, dynamic>> get userStats => _userStats ?? [];
   bool get isLoading => _isLoading;
   String? get error => _error;
 
@@ -75,8 +77,8 @@ class OrderProvider with ChangeNotifier {
         headers: token != null ? {'Authorization': 'Bearer $token'} : {},
       );
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        _users = data.map((u) => u as Map<String, dynamic>).toList();
+        final List<dynamic> data = json.decode(response.body) ?? [];
+        _users = data.map((u) => Map<String, dynamic>.from(u as Map)).toList();
       } else {
         _error = 'Failed to load users: ${response.statusCode}';
       }
@@ -180,6 +182,24 @@ class OrderProvider with ChangeNotifier {
     return false;
   }
 
+  Future<bool> updateOrderItem(String orderId, String productCode, int quantity, String? token) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$_orderBaseUrl/$orderId/item?productCode=$productCode&quantity=$quantity'),
+        headers: token != null ? {'Authorization': 'Bearer $token'} : {},
+      );
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        _error = 'Failed to update item: ${response.body}';
+      }
+    } catch (e) {
+      _error = e.toString();
+    }
+    notifyListeners();
+    return false;
+  }
+
   Future<void> fetchUserRanking(String? token) async {
     _isLoading = true;
     _error = null;
@@ -190,8 +210,8 @@ class OrderProvider with ChangeNotifier {
         headers: token != null ? {'Authorization': 'Bearer $token'} : {},
       );
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        _users = data.map((u) => u as Map<String, dynamic>).toList();
+        final List<dynamic> data = json.decode(response.body) ?? [];
+        _userStats = data.map((u) => Map<String, dynamic>.from(u as Map)).toList();
       }
     } catch (e) {
       _error = e.toString();

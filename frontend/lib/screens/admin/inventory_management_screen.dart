@@ -164,9 +164,10 @@ class _InventoryManagementScreenState extends State<InventoryManagementScreen> {
               const SizedBox(height: 16),
               TextField(
                 controller: quantityController,
-                keyboardType: TextInputType.number,
+                keyboardType: const TextInputType.numberWithOptions(signed: true),
                 decoration: InputDecoration(
-                  labelText: selectedUnit == 'PIECE' ? 'Quantity (Pieces)' : 'Quantity (Cartons)',
+                  labelText: selectedUnit == 'PIECE' ? 'Quantity (Pieces) (+/-)' : 'Quantity (Cartons) (+/-)',
+                  hintText: 'Use negative value to decrease',
                 ),
               ),
               if (selectedUnit == 'CARTON') ...[

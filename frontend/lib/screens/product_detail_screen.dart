@@ -50,28 +50,67 @@ class ProductDetailScreen extends StatelessWidget {
             Center(
               child: Container(
                 width: double.infinity,
-                height: 250,
+                height: 300,
                 decoration: BoxDecoration(
                   color: Colors.teal.shade50,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: product.imageUrl != null && product.imageUrl!.isNotEmpty
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Image.network(
-                          product.imageUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(Icons.broken_image_outlined, size: 80, color: Colors.grey),
-                        ),
+                child: product.imageUrls.isNotEmpty
+                    ? Stack(
+                        alignment: Alignment.bottomCenter,
+                        children: [
+                          PageView.builder(
+                            itemCount: product.imageUrls.length,
+                            itemBuilder: (context, index) {
+                              return ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: Image.network(
+                                  product.imageUrls[index],
+                                  fit: BoxFit.contain, // Changed to contain for full view
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(Icons.broken_image_outlined, size: 80, color: Colors.grey),
+                                ),
+                              );
+                            },
+                          ),
+                          if (product.imageUrls.length > 1)
+                            Positioned(
+                              bottom: 16,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: List.generate(
+                                  product.imageUrls.length,
+                                  (index) => Container(
+                                    width: 8,
+                                    height: 8,
+                                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.teal.withOpacity(0.5), // Active logic needed but simple for now
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       )
-                    : const Icon(Icons.shopping_bag_outlined, size: 80, color: Colors.teal),
+                    : (product.imageUrl != null && product.imageUrl!.isNotEmpty
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Image.network(
+                              product.imageUrl!,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(Icons.broken_image_outlined, size: 80, color: Colors.grey),
+                            ),
+                          )
+                        : const Icon(Icons.shopping_bag_outlined, size: 80, color: Colors.teal)),
               ),
             ),
             const SizedBox(height: 24),
             Text(
               product.name,
-              style: Theme.of(context).textTheme.headlineMedium,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
@@ -79,12 +118,35 @@ class ProductDetailScreen extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            Text(
-              '${product.price} €',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: Colors.teal,
-                    fontWeight: FontWeight.bold,
+            Row(
+              children: [
+                if (product.discountPrice != null && product.discountPrice! > 0) ...[
+                  Text(
+                    '${product.price} €',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.grey.shade500,
+                      decoration: TextDecoration.lineThrough,
+                    ),
                   ),
+                  const SizedBox(width: 12),
+                  Text(
+                    '${product.discountPrice} €',
+                    style: TextStyle(
+                      fontSize: 28,
+                      color: Colors.red.shade600,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ] else
+                  Text(
+                    '${product.price} €',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          color: Colors.teal,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+              ],
             ),
             const SizedBox(height: 16),
             Text(

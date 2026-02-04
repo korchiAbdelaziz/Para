@@ -277,14 +277,38 @@ class _ProductCard extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    '${product.price} €',
-                    style: const TextStyle(
-                      color: Colors.teal,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                  if (product.discountPrice != null && product.discountPrice! > 0)
+                    Row(
+                      children: [
+                        Text(
+                          '${product.price} €',
+                          style: TextStyle(
+                            color: Colors.grey.shade500,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${product.discountPrice} €',
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    Text(
+                      '${product.price} €',
+                      style: const TextStyle(
+                        color: Colors.teal,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
-                  ),
                   const SizedBox(height: 8),
                   if (Provider.of<AuthProvider>(context, listen: false).user?.username != 'admin')
                     SizedBox(

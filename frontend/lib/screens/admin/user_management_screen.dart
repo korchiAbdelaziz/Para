@@ -96,7 +96,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     final username = user['username'] ?? user['name'];
                     
                     // Find order count from ranking
-                    final rankingEntry = orderProvider.users.firstWhere(
+                    final rankingEntry = orderProvider.userStats.firstWhere(
                       (u) => (u['username'] ?? u['name']) == username,
                       orElse: () => {'orderCount': 0},
                     );

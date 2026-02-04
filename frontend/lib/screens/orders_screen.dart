@@ -79,8 +79,35 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     ...order.items.map((item) => ListTile(
                       title: Text(item.productCode),
                       subtitle: Text('${item.quantity} x ${item.price} €'),
-                      trailing: Text('${(item.price * item.quantity).toStringAsFixed(2)} €'),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('${(item.price * item.quantity).toStringAsFixed(2)} €'),
+                          if (order.status == 'PENDING_VALIDATION')
+                            IconButton(
+                              icon: const Icon(Icons.edit, size: 20, color: Colors.blue),
+                              onPressed: () => _showUpdateDialog(context, order.id, item),
+                            ),
+                        ],
+                      ),
                     )).toList(),
+                    if (order.status == 'PENDING_VALIDATION')
+                      Padding(
+                        padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () => _cancelOrder(order.id),
+                            icon: const Icon(Icons.cancel_outlined, size: 18),
+                            label: const Text('Cancel Order'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.redAccent,
+                              side: const BorderSide(color: Colors.redAccent),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 8),
                   ],
                 ),
@@ -88,6 +115,60 @@ class _OrdersScreenState extends State<OrdersScreen> {
             },
           );
         },
+      ),
+    );
+  }
+
+  void _cancelOrder(String id) async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final success = await Provider.of<OrderProvider>(context, listen: false).cancelOrder(id, auth.user?.token);
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Order Cancelled'),
+        backgroundColor: Colors.orange,
+      ));
+    }
+  }
+
+  void _showUpdateDialog(BuildContext context, String orderId, var item) {
+    final quantityController = TextEditingController(text: item.quantity.toString());
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Update Quantity for ${item.productCode}'),
+        content: TextField(
+          controller: quantityController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(labelText: 'New Quantity (0 to remove)'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              final newQty = int.tryParse(quantityController.text);
+              if (newQty != null && newQty >= 0) {
+                final auth = Provider.of<AuthProvider>(context, listen: false);
+                final success = await Provider.of<OrderProvider>(context, listen: false)
+                    .updateOrderItem(orderId, item.productCode, newQty, auth.user?.token);
+                
+                if (success) {
+                  Navigator.pop(ctx);
+                  if (mounted) {
+                    Provider.of<OrderProvider>(context, listen: false).fetchUserOrders(
+                      auth.user?.username ?? 'Guest',
+                      auth.user?.token,
+                    );
+                  }
+                } else {
+                   if (mounted) {
+                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to update. Check stock.')));
+                   }
+                }
+              }
+            },
+            child: const Text('Update'),
+          ),
+        ],
       ),
     );
   }
